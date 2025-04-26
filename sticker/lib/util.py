@@ -19,6 +19,7 @@ import os.path
 import json
 from pathlib import Path
 from typing import Dict, List
+import numpy as np
 import subprocess
 import tempfile
 import mimetypes
@@ -202,10 +203,17 @@ def _convert_image(data: bytes, mimetype: str) -> (bytes, int, int):
                 # Get the size of the first frame to determine resizing
                 w, h = frames[0].size
             else:
+                # Get format from mimetype and handle special cases
                 suffix = mimetypes.guess_extension(mimetype)
                 if suffix:
-                    suffix = suffix[1:]
-                image = image.convert("RGBA")
+                    suffix = suffix[1:].upper()
+                    # Fix the JPG/JPEG issue
+                    if suffix == 'JPG':
+                        suffix = 'JPEG'
+                if suffix == 'JPEG':
+                    image = image.convert("RGB")
+                else:
+                    image = image.convert("RGBA")
                 image.save(new_file, format=suffix)
                 w, h = image.size
             if w > 256 or h > 256:
